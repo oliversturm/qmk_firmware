@@ -8,19 +8,20 @@
 enum layers {
   OL_LAYER_BASE = 0,
   OL_LAYER_1,
-  OL_LAYER_2
+  OL_LAYER_2,
+  OL_LAYER_3
 };
 
 // OK - Oli Key
 enum keys {
-  OK_LAYER_INFO = SAFE_RANGE,
+  OK_CODEBLOCK = SAFE_RANGE,
 };
 
 const char * LAYER_INFO[] = {
   "Base layer",
   "1. Clipboard",
   "2. Navigation",
-  "3. ",
+  "3. Text Entry",
   "4. ",
   "5. ",
   "6. ",
@@ -32,8 +33,14 @@ const char * LAYER_INFO[] = {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
+  // My idea is to collect keys on the base layer that are
+  // also part of (an)other layer(s), but that I need frequently
+  // enough so they should be right there without switching.
+  // KC_LEAD must obviously remain here, but the other ones
+  // are not finalized and I can switch them - just be sure
+  // to coordinate with the other layers.
 	[OL_LAYER_BASE] = LAYOUT(
-		KC_KP_7, KC_KP_8, KC_KP_9, \
+		KC_KP_7, KC_KP_8, OK_CODEBLOCK, \
 		KC_KP_4, KC_KP_5, KC_KP_6, \
 		KC_KP_1, KC_KP_2, KC_KP_3, \
 		KC_LEAD, KC_KP_0, KC_KP_DOT \
@@ -51,6 +58,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_TRNS, KC_END, KC_PGDN, \
 		KC_TRNS, KC_TRNS, KC_TRNS, \
 		KC_TRNS, KC_TRNS, KC_ENT \
+	),
+
+  // Inherit from base:
+  // * OK_CODEBLOCK
+	[OL_LAYER_3] = LAYOUT(
+		KC_TRNS, KC_TRNS, KC_TRNS, \
+		KC_TRNS, KC_TRNS, KC_TRNS, \
+		KC_TRNS, KC_TRNS, KC_TRNS, \
+		KC_TRNS, KC_TRNS, KC_TRNS \
 	)
 };
 
@@ -108,7 +124,7 @@ void matrix_scan_user(void) {
 
     SEQ_ONE_KEY(KC_KP_DOT) {
       uprintf("OLI: Test sequence\n");
-      SEND_STRING("!!! 11 !!!");
+      SEND_STRING("!!! 12 !!!");
     }
 
     // Go back to base layer
@@ -126,13 +142,18 @@ void matrix_scan_user(void) {
   }
 }
 
-// bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 // #ifdef CONSOLE_ENABLE
 //     uprintf("KL: kc: 0x%04X, col: %u, row: %u, pressed: %b, time: %u, interrupt: %b, count: %u\n", keycode, record->event.key.col, record->event.key.row, record->event.pressed, record->event.time, record->tap.interrupted, record->tap.count);
 // #endif 
 
-//   switch (keycode) {
-//   }
+  switch (keycode) {
+    case OK_CODEBLOCK: 
+      if (record->event.pressed) {
+        SEND_STRING("```");
+      }
+    break;
+  }
   
-//   return true;
-// };
+  return true;
+};
