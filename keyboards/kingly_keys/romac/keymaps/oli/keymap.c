@@ -9,20 +9,30 @@ enum layers {
   OL_LAYER_BASE = 0,
   OL_LAYER_1,
   OL_LAYER_2,
-  OL_LAYER_3
+  OL_LAYER_3,
+  OL_LAYER_4
 };
 
 // OK - Oli Key
 enum keys {
   OK_CODEBLOCK = SAFE_RANGE,
+  OK_WORKSPACE_1_M,
+  OK_WORKSPACE_1_C,
+  OK_WORKSPACE_1_W,
+  OK_WORKSPACE_2_C,
+  OK_WORKSPACE_2_M,
+  OK_WORKSPACE_2_T,
+  OK_WORKSPACE_3_D,
+  OK_WORKSPACE_3_A,
+  OK_WORKSPACE_3_E,
 };
 
 const char * LAYER_INFO[] = {
   "Base layer",
   "1. Clipboard",
-  "2. Navigation",
+  "2. Line Navigation",
   "3. Text Entry",
-  "4. ",
+  "4. Workspace Navigation",
   "5. ",
   "6. ",
   "7. ",
@@ -40,12 +50,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // are not finalized and I can switch them - just be sure
   // to coordinate with the other layers.
 	[OL_LAYER_BASE] = LAYOUT(
-		KC_KP_7, KC_KP_8, OK_CODEBLOCK, \
-		KC_KP_4, KC_KP_5, KC_KP_6, \
-		KC_KP_1, KC_KP_2, KC_KP_3, \
+		OK_WORKSPACE_1_W, OK_WORKSPACE_2_T, OK_CODEBLOCK,     \
+		OK_WORKSPACE_1_C, OK_WORKSPACE_2_M, OK_WORKSPACE_3_A, \
+		OK_WORKSPACE_1_M, OK_WORKSPACE_2_C, OK_WORKSPACE_3_D, \
 		KC_LEAD, KC_KP_0, KC_KP_DOT \
 	),
 
+  // Clipboard
 	[OL_LAYER_1] = LAYOUT(
 		C(KC_I), KC_TRNS, C(KC_DOT), \
 		KC_TRNS, KC_TRNS, KC_TRNS, \
@@ -53,6 +64,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_TRNS, KC_TRNS, KC_TRNS \
 	),
 
+  // Line navigation
 	[OL_LAYER_2] = LAYOUT(
 		KC_TRNS, KC_HOME, KC_PGUP, \
 		KC_TRNS, KC_END, KC_PGDN, \
@@ -60,14 +72,23 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_TRNS, KC_TRNS, KC_ENT \
 	),
 
-  // Inherit from base:
-  // * OK_CODEBLOCK
+
+  // Text entry
 	[OL_LAYER_3] = LAYOUT(
-		KC_TRNS, KC_TRNS, KC_TRNS, \
+		KC_TRNS, KC_TRNS, OK_CODEBLOCK, \
 		KC_TRNS, KC_TRNS, KC_TRNS, \
 		KC_TRNS, KC_TRNS, KC_TRNS, \
 		KC_TRNS, KC_TRNS, KC_TRNS \
-	)
+	),
+
+  // Workspace navigation
+	[OL_LAYER_4] = LAYOUT(
+		OK_WORKSPACE_1_W, OK_WORKSPACE_2_T, OK_WORKSPACE_3_E, \
+		OK_WORKSPACE_1_C, OK_WORKSPACE_2_M, OK_WORKSPACE_3_A, \
+		OK_WORKSPACE_1_M, OK_WORKSPACE_2_C, OK_WORKSPACE_3_D, \
+		KC_TRNS,          KC_TRNS,          KC_TRNS           \
+	),
+
 };
 
 int currentLayerIndex = 0;
@@ -88,43 +109,51 @@ LEADER_EXTERNS();
 
 void matrix_scan_user(void) {
   LEADER_DICTIONARY() {
+    // Oli - following two lines here based on examples. There
+    // are other examples that call leader_end at the end of this 
+    // function, after the SEQ_ calls - not sure if there's a 
+    // difference. It appears that leading has the correct
+    // value inside process_record_user, so it's all good 
+    // for my purposes.
     leading = false;
     leader_end();
 
     // Switch to numbered layers
-    SEQ_ONE_KEY(KC_KP_1) {
+    SEQ_ONE_KEY(OK_WORKSPACE_1_M) {
       uprintf("OLI: Go to layer 1\n");
       layer_move(OL_LAYER_1);
     }
-    SEQ_ONE_KEY(KC_KP_2) {
+    SEQ_ONE_KEY(OK_WORKSPACE_2_C) {
       uprintf("OLI: Go to layer 2\n");
       layer_move(OL_LAYER_2);
     }
-    SEQ_ONE_KEY(KC_KP_3) {
+    SEQ_ONE_KEY(OK_WORKSPACE_3_D) {
       uprintf("OLI: Go to layer 3\n");
+      layer_move(OL_LAYER_3);
     }
-    SEQ_ONE_KEY(KC_KP_4) {
+    SEQ_ONE_KEY(OK_WORKSPACE_1_C) {
       uprintf("OLI: Go to layer 4\n");
+      layer_move(OL_LAYER_4);
     }
-    SEQ_ONE_KEY(KC_KP_5) {
+    SEQ_ONE_KEY(OK_WORKSPACE_2_M) {
       uprintf("OLI: Go to layer 5\n");
     }
-    SEQ_ONE_KEY(KC_KP_6) {
+    SEQ_ONE_KEY(OK_WORKSPACE_3_A) {
       uprintf("OLI: Go to layer 6\n");
     }
-    SEQ_ONE_KEY(KC_KP_7) {
+    SEQ_ONE_KEY(OK_WORKSPACE_1_W) {
       uprintf("OLI: Go to layer 7\n");
     }
-    SEQ_ONE_KEY(KC_KP_8) {
+    SEQ_ONE_KEY(OK_WORKSPACE_2_T) {
       uprintf("OLI: Go to layer 8\n");
     }
-    SEQ_ONE_KEY(KC_KP_9) {
+    SEQ_ONE_KEY(OK_CODEBLOCK) {
       uprintf("OLI: Go to layer 9\n");
     }
 
     SEQ_ONE_KEY(KC_KP_DOT) {
       uprintf("OLI: Test sequence\n");
-      SEND_STRING("!!! 12 !!!");
+      SEND_STRING("!!! 15 !!!");
     }
 
     // Go back to base layer
@@ -147,13 +176,72 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 //     uprintf("KL: kc: 0x%04X, col: %u, row: %u, pressed: %b, time: %u, interrupt: %b, count: %u\n", keycode, record->event.key.col, record->event.key.row, record->event.pressed, record->event.time, record->tap.interrupted, record->tap.count);
 // #endif 
 
-  switch (keycode) {
-    case OK_CODEBLOCK: 
-      if (record->event.pressed) {
-        SEND_STRING("```");
-      }
-    break;
+  // All of these codes are only evaluated if they are not pressed
+  // as part of a leader sequence.
+  if (!leading) {
+    switch (keycode) {
+      case OK_CODEBLOCK: 
+        if (record->event.pressed) {
+          SEND_STRING("```");
+        }
+      break;
+
+      case OK_WORKSPACE_1_M: 
+        if (record->event.pressed) {
+          //uprintf("OLI: WORKSPACE_1_M: leading: %b\n", leading);
+          SEND_STRING(SS_LGUI("1") "m");
+        }
+      break;
+
+      case OK_WORKSPACE_1_C: 
+        if (record->event.pressed) {
+          SEND_STRING(SS_LGUI("1") "c");
+        }
+      break;
+
+      case OK_WORKSPACE_1_W: 
+        if (record->event.pressed) {
+          SEND_STRING(SS_LGUI("1") "w");
+        }
+      break;
+
+      case OK_WORKSPACE_2_T: 
+        if (record->event.pressed) {
+          SEND_STRING(SS_LGUI("2") "t");
+        }
+      break;
+
+      case OK_WORKSPACE_2_M: 
+        if (record->event.pressed) {
+          SEND_STRING(SS_LGUI("2") "m");
+        }
+      break;
+
+      case OK_WORKSPACE_2_C: 
+        if (record->event.pressed) {
+          SEND_STRING(SS_LGUI("2") "c");
+        }
+      break;
+
+      case OK_WORKSPACE_3_E: 
+        if (record->event.pressed) {
+          SEND_STRING(SS_LGUI("3") "e");
+        }
+      break;
+
+      case OK_WORKSPACE_3_A: 
+        if (record->event.pressed) {
+          SEND_STRING(SS_LGUI("3") "a");
+        }
+      break;
+
+      case OK_WORKSPACE_3_D: 
+        if (record->event.pressed) {
+          SEND_STRING(SS_LGUI("3") "d");
+        }
+      break;
+    }
   }
-  
+
   return true;
 };
