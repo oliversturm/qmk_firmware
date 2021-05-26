@@ -1,4 +1,5 @@
 #include QMK_KEYBOARD_H
+#include "printf.h"
 
 enum ctrl_keycodes {
     U_T_AUTO = SAFE_RANGE, //USB Extra Port Toggle Auto Detect / Always Active
@@ -8,12 +9,15 @@ enum ctrl_keycodes {
     DBG_KBD,               //DEBUG Toggle Keyboard Prints
     DBG_MOU,               //DEBUG Toggle Mouse Prints
     MD_BOOT,               //Restart into bootloader after hold timeout
+
+    TEST_OUTPUT_LAYER,
 };
 
 enum layout_names {
     LAYOUT_BASE_DVORAK = 0,
     LAYOUT_STANDARD_FN = 1,
-    LAYOUT_BASE_USANSI = 2
+    LAYOUT_BASE_USANSI = 2,
+    LAYOUT_INLINE_CURSOR = 3,
 };
 
 #define MILLISECONDS_IN_SECOND 1000
@@ -62,22 +66,31 @@ uint16_t rgb_time_out_seconds;          // Idle LED timeout value, in seconds no
 uint16_t rgb_time_out_saved_seconds;    // The saved user config for RGB timeout period
 led_flags_t rgb_time_out_saved_flag;    // Store LED flag before timeout so it can be restored when LED is turned on again.
 
+enum tapdance_keycodes {
+    TD_CAPS_CURSOR
+};
+
+qk_tap_dance_action_t tap_dance_actions[] = {
+    [TD_CAPS_CURSOR] = ACTION_TAP_DANCE_DOUBLE(KC_LCTL, MO(LAYOUT_INLINE_CURSOR)),
+};
+
+
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [LAYOUT_BASE_DVORAK] = LAYOUT(
         KC_ESC,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,             KC_PSCR, KC_PSCR, KC_PSCR, \
         KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_LBRC, KC_RBRC, KC_BSPC,   KC_HOME,  KC_HOME, KC_PGUP, \
         KC_TAB,  KC_QUOT, KC_COMM, KC_DOT,  KC_P,    KC_Y,    KC_F,    KC_G,    KC_C,    KC_R,    KC_L,    KC_SLSH, KC_EQL,  KC_BSLS,   KC_DEL,  KC_END,  KC_PGDN, \
-        KC_LCTL, KC_A,    KC_O,    KC_E,    KC_U,    KC_I,    KC_D,    KC_H,    KC_T,    KC_N,    KC_S,    KC_MINS, KC_ENT, \
+        TD(TD_CAPS_CURSOR), KC_A,    KC_O,    KC_E,    KC_U,    KC_I,    KC_D,    KC_H,    KC_T,    KC_N,    KC_S,    KC_MINS, KC_ENT, \
         KC_LSFT, KC_SCLN, KC_Q,    KC_J,    KC_K,    KC_X,    KC_B,    KC_M,    KC_W,    KC_V,    KC_Z,    KC_RSFT,                              KC_UP, \
-        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(1),   KC_APP,  KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
+        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(LAYOUT_STANDARD_FN),   /*TEST_OUTPUT_LAYER*/KC_APP,  KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
     ),
     [LAYOUT_STANDARD_FN] = LAYOUT(
-        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, DF(2),              KC_MUTE, _______, _______, \
-        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,   KC_MPLY, KC_MSTP, KC_VOLU, \
-        _______, RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, U_T_AUTO,U_T_AGCR,_______, _______, _______, _______, _______,   KC_MPRV, KC_MNXT, KC_VOLD, \
-        _______, RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, _______, _______, _______, _______, _______, _______, _______, \
-        _______, RGB_TOG, _______, _______, _______, MD_BOOT, NK_TOGG, _______, _______, _______, _______, _______,                              _______, \
+        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, TO(LAYOUT_BASE_USANSI) /*F12*/,              _______, _______, _______, \
+        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,   _______, _______, KC_VOLU /*PgUp*/, \
+        _______, _______, _______, _______, _______, _______, _______, _______,_______,_______, _______, _______, _______, _______,   KC_MPRV, KC_MNXT, KC_VOLD/*PgDn*/, \
+        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+        _______, _______, _______, _______, _______, MD_BOOT /*B*/, _______, _______, _______, _______, _______, _______,                              _______, \
         _______, _______, _______,                   _______,                            _______, _______, _______, _______,            _______, _______, _______ \
     ),
 
@@ -88,8 +101,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS,   KC_DEL,  KC_END,  KC_PGDN, \
         KC_LCTL, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT, KC_ENT, \
         KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,                              KC_UP, \
-        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, DF(0),   KC_APP,  KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
+        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, TG(LAYOUT_BASE_USANSI),   KC_APP,  KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
     ),
+
+    [LAYOUT_INLINE_CURSOR] = LAYOUT(
+        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,              _______, _______, _______, \
+        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,   _______, _______, _______, \
+        _______, _______, _______, _______, _______, _______, KC_PGUP, KC_HOME, KC_UP/*I*/ ,KC_END, _______, _______, _______, _______,   _______, _______, _______, \
+        _______, _______, _______, _______, _______, _______, KC_PGDN, KC_LEFT, KC_DOWN, KC_RGHT, _______, _______, _______, \
+        KC_LSFT, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, KC_RSFT,                              _______, \
+        KC_LCTL, _______, _______,                   _______,                            _______, _______, _______, KC_RCTL,            _______, _______, _______ \
+    ),
+
     /*
     [X] = LAYOUT(
         _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,            _______, _______, _______, \
@@ -102,6 +125,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     */
 };
 
+
 #ifdef _______
 #undef _______
 #define _______ {0, 0, 0}
@@ -112,10 +136,10 @@ const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL][3] = {
         _______, _______, _______, _______, _______, _______,   _______, _______, _______, _______, _______, _______,  YELLOW /*F12*/, _______, _______, _______,
 
         // 17 keys
-        _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______,   _______, _______, _______, _______, _______,
+        _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______,   _______, _______, _______, _______, YELLOW /*PgUp*/,
 
         // 17 keys
-        _______,  _______,  _______,  _______,  _______,  _______,  _______, _______, _______,   _______, _______, _______, _______, _______, _______,  _______,  _______,
+        _______,  _______,  _______,  _______,  _______,  _______,  _______, _______, _______,   _______, _______, _______, _______, _______, YELLOW /*Del*/,  YELLOW /*End*/,  YELLOW /*PgDn*/,
 
         // 13 keys
         _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______, _______, _______,
@@ -160,7 +184,7 @@ const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL][3] = {
         ORANGE, ORANGE, ORANGE, 
 
         ORANGE, ORANGE, ORANGE, ORANGE, ORANGE, 
-        ORANGE, ORANGE, ORANGE, ORANGE, ORANGE, 
+        RED /*Fn*/, ORANGE, ORANGE, ORANGE, ORANGE, 
         ORANGE, 
 
         ORANGE, ORANGE, ORANGE, ORANGE, ORANGE, 
@@ -172,6 +196,35 @@ const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL][3] = {
         ORANGE, ORANGE, 
 
     },
+
+    [LAYOUT_INLINE_CURSOR] = {
+        // 16 keys
+        _______, _______, _______, _______, _______, _______,   _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______,
+
+        // 17 keys
+        _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______,   _______, _______, _______, _______, _______,
+
+        // 17 keys
+        _______,  _______,  _______,  _______, _______,  _______,  CYAN, CYAN, CYAN, CYAN, _______, _______, _______, _______, _______,  _______,  _______,
+
+        // 13 keys
+        _______, _______, _______, _______, _______, _______,  CYAN, CYAN, CYAN, CYAN, _______, _______, _______,
+
+        // 13 keys
+        CYAN, _______,  _______, _______,   _______, _______, _______,   _______, _______, _______, _______, CYAN,                         _______,
+
+        // 11 keys
+        CYAN, _______, _______,                   _______,                            _______, _______,    _______, CYAN,            _______, _______, _______,
+
+        // outer LEDs (32)
+        CYAN, CYAN, CYAN, 
+        CYAN, CYAN, CYAN, CYAN, CYAN, 
+        CYAN, CYAN, CYAN, CYAN, CYAN, 
+        CYAN, CYAN, CYAN, CYAN, CYAN, 
+        CYAN, CYAN, CYAN, CYAN, CYAN, 
+        CYAN, CYAN, CYAN, CYAN, CYAN, 
+        CYAN, CYAN, CYAN, CYAN,  // 119
+    },
 };
 
 #undef _______
@@ -181,6 +234,20 @@ const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL][3] = {
 
 // Runs just one time when the keyboard initializes.
 void matrix_init_user(void) {
+    // Oli: deactivating this for now - it does not work.
+    // Whenever anything is printed, the keyboard hangs.
+    // I'm not sure how this is supposed to work.
+    // This issue claims it does not work at all: 
+    // https://github.com/qmk/qmk_firmware/issues/3808
+    // Instead I'm supposed to use a serial terminal,
+    // but I don't have any available port on my machine - 
+    // not that I remember the  first thing about how to connect
+    // to serial ports. Oh well. Then again, perhaps things
+    // have changed - I find it peculiar that the standard
+    // config of the keyboard has all sorts of debug commands
+    // and then it just hangs? Odd.
+    debug_enable = false;
+
     idle_second_counter = 0;                            // Counter for number of seconds keyboard has been idle.
     key_event_counter = 0;                              // Counter to determine if keys are being held, neutral at 0.
     rgb_time_out_seconds = RGB_DEFAULT_TIME_OUT;        // RGB timeout initialized to its default configure in keymap.h
@@ -245,6 +312,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 
     switch (keycode) {
+        case TEST_OUTPUT_LAYER:
+            if (record->event.pressed) {
+                int layer = get_highest_layer(layer_state);
+                char layerS[10];
+                snprintf(layerS, 10, "%d", layer);
+                SEND_STRING("Highest layer: ");
+                send_string(layerS);
+            }
+            return false;
+
+
         case U_T_AUTO:
             if (record->event.pressed && MODS_SHIFT && MODS_CTRL) {
                 TOGGLE_FLAG_AND_PRINT(usb_extra_manual, "USB extra port manual mode");
@@ -257,7 +335,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
         case DBG_TOG:
             if (record->event.pressed) {
-                TOGGLE_FLAG_AND_PRINT(debug_enable, "Debug mode");
+                // Not doing this - see comment above
+                //TOGGLE_FLAG_AND_PRINT(debug_enable, "Debug mode");
             }
             return false;
         case DBG_MTRX:
@@ -284,32 +363,32 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 }
             }
             return false;
-        case RGB_TOG:
-            if (record->event.pressed) {
-              switch (rgb_matrix_get_flags()) {
-                case LED_FLAG_ALL: {
-                    rgb_matrix_set_flags(LED_FLAG_KEYLIGHT | LED_FLAG_MODIFIER | LED_FLAG_INDICATOR);
-                    rgb_matrix_set_color_all(0, 0, 0);
-                  }
-                  break;
-                case (LED_FLAG_KEYLIGHT | LED_FLAG_MODIFIER | LED_FLAG_INDICATOR): {
-                    rgb_matrix_set_flags(LED_FLAG_UNDERGLOW);
-                    rgb_matrix_set_color_all(0, 0, 0);
-                  }
-                  break;
-                case LED_FLAG_UNDERGLOW: {
-                    rgb_matrix_set_flags(LED_FLAG_NONE);
-                    rgb_matrix_disable_noeeprom();
-                  }
-                  break;
-                default: {
-                    rgb_matrix_set_flags(LED_FLAG_ALL);
-                    rgb_matrix_enable_noeeprom();
-                  }
-                  break;
-              }
-            }
-            return false;
+        // case RGB_TOG:
+        //     if (record->event.pressed) {
+        //       switch (rgb_matrix_get_flags()) {
+        //         case LED_FLAG_ALL: {
+        //             rgb_matrix_set_flags(LED_FLAG_KEYLIGHT | LED_FLAG_MODIFIER | LED_FLAG_INDICATOR);
+        //             rgb_matrix_set_color_all(0, 0, 0);
+        //           }
+        //           break;
+        //         case (LED_FLAG_KEYLIGHT | LED_FLAG_MODIFIER | LED_FLAG_INDICATOR): {
+        //             rgb_matrix_set_flags(LED_FLAG_UNDERGLOW);
+        //             rgb_matrix_set_color_all(0, 0, 0);
+        //           }
+        //           break;
+        //         case LED_FLAG_UNDERGLOW: {
+        //             rgb_matrix_set_flags(LED_FLAG_NONE);
+        //             rgb_matrix_disable_noeeprom();
+        //           }
+        //           break;
+        //         default: {
+        //             rgb_matrix_set_flags(LED_FLAG_ALL);
+        //             rgb_matrix_enable_noeeprom();
+        //           }
+        //           break;
+        //       }
+        //     }
+        //     return false;
         default:
             return true; //Process all other keycodes normally
     }
@@ -320,6 +399,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 // https://beta.docs.qmk.fm/using-qmk/hardware-features/lighting/feature_rgb_matrix#colors-id-colors
 
 void set_layer_color(int layer) {
+    // Don't uprintf here - it hangs.
+    //uprintf("Oli: set_layer_color(%d)\n", layer);
     if (layer == 0) { return; }
     for (int i = 0; i < DRIVER_LED_TOTAL; i++) {
         HSV hsv = {
