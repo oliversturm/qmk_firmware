@@ -315,6 +315,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 }
 
+// Oli: I have no idea why we do all this calculating here
+// since RGB colors are also supported.
+// https://beta.docs.qmk.fm/using-qmk/hardware-features/lighting/feature_rgb_matrix#colors-id-colors
+
 void set_layer_color(int layer) {
     if (layer == 0) { return; }
     for (int i = 0; i < DRIVER_LED_TOTAL; i++) {

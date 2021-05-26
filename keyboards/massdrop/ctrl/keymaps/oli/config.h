@@ -45,6 +45,29 @@
 #define RGB_MATRIX_KEYPRESSES         // reacts to keypresses
 // #define RGB_MATRIX_KEYRELEASES        // reacts to keyreleases (instead of keypresses)
 #define RGB_MATRIX_STARTUP_MODE RGB_MATRIX_ALPHAS_MODS // Sets the default mode, if none has been set
+
+// Oli - added these after long search, to define the default
+// colors for alpha keys and modifiers
+
+#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 240
+
+// These three define hue, saturation and value for the primary
+// color. Note that hue is specified with a maximum of 255,
+// not 360 as normal - so for instance yellow is really 60,
+// but it's only 43 in this model. Cyan is 127 in this model,
+// but more like 180 in the standard one.
+// In the same way, saturation is normally expressed out of 100,
+// but it uses 255 here is well.
+#define RGB_MATRIX_STARTUP_HUE 43 // default: 0
+#define RGB_MATRIX_STARTUP_SAT 200 // default: 255
+#define RGB_MATRIX_STARTUP_VAL 240 // default: RGB_MATRIX_MAXIMUM_BRIGHTNESS (200)
+
+// This is used for the hue of the secondary (modifier) color
+// Other parts of the color can't be changed.
+#define RGB_MATRIX_STARTUP_SPD 127 // default: 127
+
+
+
 // #define RGBLIGHT_HUE_STEP 12        // Units to step when in/decreasing hue
 // #define RGBLIGHT_SAT_STEP 25        // Units to step when in/decreasing saturation
 // #define RGBLIGHT_VAL_STEP 12        // Units to step when in/decreasing value (brightness)
