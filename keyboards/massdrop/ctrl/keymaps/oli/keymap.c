@@ -70,8 +70,12 @@ enum tapdance_keycodes {
     TD_CAPS_CURSOR
 };
 
+void caps_cursor_tapdance_finished(qk_tap_dance_state_t *state, void * user_data);
+void caps_cursor_tapdance_reset(qk_tap_dance_state_t * state, void * user_data);
+
 qk_tap_dance_action_t tap_dance_actions[] = {
-    [TD_CAPS_CURSOR] = ACTION_TAP_DANCE_DOUBLE(KC_LCTL, MO(LAYOUT_INLINE_CURSOR)),
+    //[TD_CAPS_CURSOR] = ACTION_TAP_DANCE_DOUBLE(KC_LCTL, MO(LAYOUT_INLINE_CURSOR)),
+    [TD_CAPS_CURSOR] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, caps_cursor_tapdance_finished, caps_cursor_tapdance_reset),
 };
 
 
@@ -82,7 +86,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_LBRC, KC_RBRC, KC_BSPC,   KC_HOME,  KC_HOME, KC_PGUP, \
         KC_TAB,  KC_QUOT, KC_COMM, KC_DOT,  KC_P,    KC_Y,    KC_F,    KC_G,    KC_C,    KC_R,    KC_L,    KC_SLSH, KC_EQL,  KC_BSLS,   KC_DEL,  KC_END,  KC_PGDN, \
         TD(TD_CAPS_CURSOR), KC_A,    KC_O,    KC_E,    KC_U,    KC_I,    KC_D,    KC_H,    KC_T,    KC_N,    KC_S,    KC_MINS, KC_ENT, \
-        KC_LSFT, KC_SCLN, KC_Q,    KC_J,    KC_K,    KC_X,    KC_B,    KC_M,    KC_W,    KC_V,    KC_Z,    KC_RSFT,                              KC_UP, \
+        KC_LSPO, KC_SCLN, KC_Q,    KC_J,    KC_K,    KC_X,    KC_B,    KC_M,    KC_W,    KC_V,    KC_Z,    KC_RSPC,                              KC_UP, \
         KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(LAYOUT_STANDARD_FN),   /*TEST_OUTPUT_LAYER*/KC_APP,  KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
     ),
     [LAYOUT_STANDARD_FN] = LAYOUT(
@@ -425,4 +429,75 @@ void rgb_matrix_indicators_user(void) {
             return;
         }
     set_layer_color(get_highest_layer(layer_state));
+}
+
+typedef enum {
+    TD_NONE,
+    TD_UNKNOWN,
+    TD_SINGLE_TAP,
+    TD_SINGLE_HOLD,
+    TD_DOUBLE_TAP,
+    TD_DOUBLE_HOLD,
+} td_state_t;
+
+typedef struct {
+    // Oli: I have no idea at all what this field is for - 
+    // copied from doc samples. It does not seem to be used.
+    bool is_press_action;
+    td_state_t state;
+} td_tap_t;
+
+static td_tap_t cctd_tap_state = {
+    .is_press_action = true,
+    .state = TD_NONE
+};
+
+td_state_t cur_dance(qk_tap_dance_state_t * state) {
+    if (state->count == 1) {
+        if (state->interrupted || !state->pressed) return TD_SINGLE_TAP;
+        else return TD_SINGLE_HOLD;
+    }
+    else if (state->count == 2) { 
+        if (state->interrupted || !state->pressed) return TD_DOUBLE_TAP;
+        else return TD_DOUBLE_HOLD;
+    }
+    else return TD_UNKNOWN;
+}
+
+void caps_cursor_tapdance_finished(qk_tap_dance_state_t *state, void * user_data) {
+    cctd_tap_state.state = cur_dance(state);
+    switch (cctd_tap_state.state) {
+        case TD_SINGLE_TAP:
+            // nothing
+            break;
+        case TD_SINGLE_HOLD:
+            // set modifier control
+            register_code(KC_LCTL);
+            break;
+        case TD_DOUBLE_TAP:
+            // activate layer permanently - but how do I get out?
+            // maybe just toggle the layer, then I can switch
+            // it off the same way
+            if (layer_state_is(LAYOUT_INLINE_CURSOR))
+                layer_off(LAYOUT_INLINE_CURSOR);
+            else
+                layer_on(LAYOUT_INLINE_CURSOR);
+            break;
+        case TD_DOUBLE_HOLD:
+            layer_on(LAYOUT_INLINE_CURSOR);
+            break;
+        case TD_NONE:
+        case TD_UNKNOWN:
+            break;
+    }
+}
+
+void caps_cursor_tapdance_reset(qk_tap_dance_state_t * state, void * user_data) {
+    if (cctd_tap_state.state == TD_SINGLE_HOLD) {
+        unregister_code(KC_LCTL);
+    }
+    else if (cctd_tap_state.state == TD_DOUBLE_HOLD) {
+        layer_off(LAYOUT_INLINE_CURSOR);
+    }    
+    cctd_tap_state.state = TD_NONE;
 }
