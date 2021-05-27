@@ -212,7 +212,7 @@ const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL][3] = {
         _______,  _______,  _______,  _______, _______,  _______,  CYAN, CYAN, CYAN, CYAN, _______, _______, _______, _______, _______,  _______,  _______,
 
         // 13 keys
-        _______, _______, _______, _______, _______, _______,  CYAN, CYAN, CYAN, CYAN, _______, _______, _______,
+        RED, _______, _______, _______, _______, _______,  CYAN, CYAN, CYAN, CYAN, _______, _______, _______,
 
         // 13 keys
         CYAN, _______,  _______, _______,   _______, _______, _______,   _______, _______, _______, _______, CYAN,                         _______,
@@ -453,12 +453,20 @@ static td_tap_t cctd_tap_state = {
 };
 
 td_state_t cur_dance(qk_tap_dance_state_t * state) {
+    // Oli: I used to react to state->interrupted on the basis
+    // of one of the examples from docs. However, this is 
+    // unnecessary in the double-tap case and problematic in the
+    // single-tap case - the latter means that when I quickly
+    // press CapsLock and then A, for example, the interrupted
+    // state is recognized and then I don't get Ctrl-A out of
+    // it. This is weird - not sure what the author of that
+    // example had in mind with that.
     if (state->count == 1) {
-        if (state->interrupted || !state->pressed) return TD_SINGLE_TAP;
+        if (/*state->interrupted ||*/ !state->pressed) return TD_SINGLE_TAP;
         else return TD_SINGLE_HOLD;
     }
     else if (state->count == 2) { 
-        if (state->interrupted || !state->pressed) return TD_DOUBLE_TAP;
+        if (/*state->interrupted ||*/ !state->pressed) return TD_DOUBLE_TAP;
         else return TD_DOUBLE_HOLD;
     }
     else return TD_UNKNOWN;
