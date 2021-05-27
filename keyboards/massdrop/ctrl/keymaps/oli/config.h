@@ -1,5 +1,6 @@
 #pragma once
 
+#define UNICODE_SELECTED_MODES UC_LNX
 
 // #define MODS_SHIFT  (get_mods() & MOD_MASK_SHIFT)
 // #define MODS_CTRL   (get_mods() & MOD_MASK_CTRL)
